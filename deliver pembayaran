@@ -1,0 +1,722 @@
+<?php
+    include "conn.php";
+    $id = $_SESSION["id"]; $nama = $_SESSION["nama"]; $btn = "";
+    $total = 0; $kembalikan = 0; $ongkir = 0;
+
+    $queryOngkir = "SELECT harga FROM harga_kirim WHERE harga > 0 ORDER BY 1 ASC";
+    $resultOngkir = mysqli_query(getconn(), $queryOngkir);	
+    if ($resultOngkir->num_rows > 0) {
+        while ($rowOngkir = $resultOngkir->fetch_assoc()) {
+            $ongkir = $rowOngkir["harga"];
+        }
+    }
+
+    if(isset($_POST["btnLogout"])) {
+        unset($_SESSION["id"]);
+        unset($_SESSION["nama"]);
+        unset($_SESSION["jabatan"]);
+        unset($_SESSION["pemilik"]);
+        unset($_SESSION["id_cust"]);
+        header("Location: index.php");
+    }
+
+    unset($_SESSION["from"]);
+    if(isset($_POST["from"])) {
+        if($_POST["from"] != null && $_POST["from"] != "") {
+            $_SESSION["from"] = $_POST["from"];
+        } else {
+            unset($_SESSION["from"]);
+        }
+    }
+    unset($_SESSION["alamat"]);
+    if(isset($_POST["alamat"])) {
+        if($_POST["alamat"] != null && $_POST["alamat"] != "") {
+            $_SESSION["alamat"] = $_POST["alamat"];
+        } else {
+            unset($_SESSION["alamat"]);
+        }
+    }
+    unset($_SESSION["provinsi"]);
+    unset($_SESSION["getValProvinsi"]);
+    if(isset($_POST["getValProvinsi"])) {
+        if($_POST["provinsi"] != "") {
+            $_SESSION["getValProvinsi"] = $_POST["getValProvinsi"];
+            $_SESSION["provinsi"] = $_POST["getValProvinsi"];
+        } else {
+            unset($_SESSION["provinsi"]);
+            unset($_SESSION["getValProvinsi"]);
+        }
+    }
+
+    unset($_SESSION["kabupaten"]);
+    unset($_SESSION["kota"]);
+    if(isset($_POST["kabupaten"])) {
+        if($_POST["kabupaten"] != "") {
+            $_SESSION["kabupaten"] = $_POST["getValKota"];
+            $_SESSION["kota"] = $_POST["getkotaCase"];
+        }
+    }
+
+    $query = "SELECT toko.nama_toko, toko.google_map, toko.address_map, toko.kota, toko.provinsi, keranjang.id_cust FROM toko, item, keranjang WHERE keranjang.id_cust='$id' AND toko.id_pemilik=item.pemilik AND item.id_brg=keranjang.id_brg GROUP BY toko.nama_toko, toko.google_map, toko.kota, toko.provinsi, keranjang.id_cust ORDER BY 1 ASC";
+    $result = mysqli_query(getconn(), $query);	
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            if(isset($_POST["btnPilih"])) {
+                if($_POST["btnPilih"] == $row["id_cust"] . $row["google_map"]) {
+                    //echo "<script> alert('$row[google_map]'); </script>";
+                    $map = $row["google_map"]; 
+                    $address = $row["address_map"];
+                    $_POST["to"] = $map;
+                    $_POST["destination"] = $address;
+                    $_POST["toko"] = $row["nama_toko"]; 
+                }
+            }
+        }
+    }
+?>
+
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title> Pembayaran Pengiriman </title>
+
+        <!-- Template Stylesheet -->
+        <link href="css/style.css" rel="stylesheet">
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <!-- Site CSS -->
+        <link rel="stylesheet" href="style.css">
+        <!-- ALL VERSION CSS -->
+        <link rel="stylesheet" href="css/versions.css">
+        <!-- Responsive CSS -->
+        <link rel="stylesheet" href="css/responsive.css">
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="css/custom.css">
+        <!-- Modernizer for Portfolio -->
+        <script src="js/modernizer.js"></script>
+
+        <!-- Common -->
+        <link href="assets/css/lib/font-awesome.min.css" rel="stylesheet">
+        <link href="assets/css/lib/themify-icons.css" rel="stylesheet">
+        <link href="assets/css/lib/menubar/sidebar.css" rel="stylesheet">
+        <link href="assets/css/lib/bootstrap.min.css" rel="stylesheet">
+        <link href="assets/css/lib/helper.css" rel="stylesheet">
+        <link href="assets/css/style.css" rel="stylesheet">
+
+        <link rel="stylesheet" href="bootstrap/css/bootstrap.css">
+        <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+        <link rel="stylesheet" href="bootstrap/css/bootstrap-grid.css">
+        <link rel="stylesheet" href="bootstrap/css/bootstrap-grid.min.css">
+        <link rel="stylesheet" href="bootstrap/css/bootstrap-reboot.css">
+        <link rel="stylesheet" href="bootstrap/css/bootstrap-reboot.min.css">
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="css/bootstrapTail.min.css">
+        <!-- Site CSS -->
+        <link rel="stylesheet" href="css/styleTail.css">
+        <!-- Responsive CSS -->
+        <link rel="stylesheet" href="css/responsiveTail.css">
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="css/customTail.css">
+
+        <!-- Favicon -->
+        <link href="img/SayurLogo.jpg" rel="icon">
+        
+        <!-- Google Maps JavaScript library -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places&key=AIzaSyACQwHscSlffJq2t1Vu4Nr_7EpRU0XSTHI"></script>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-127341144-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'UA-127341144-1');
+        </script>
+
+        <style>
+            #btnPilih:hover {
+                box-shadow: 10px 10px 10px firebrick;
+                transform: scale(1.03);
+                transition: transform 0s linear;
+            }
+        </style>
+    </head>
+
+    <body>
+        <form method="post">
+            <!-- Sidebar Start -->
+            <div class="sidebar sidebar-hide-to-small sidebar-shrink sidebar-gestures">
+                <div class="nano">
+                    <div class="nano-content">
+                        <div class="logo">
+                            <a  href="katalog.php">
+                                <span> Halaman Pembayaran </span>
+                            </a>
+                        </div>
+                        <ul>
+                            <li class="label"> Akses Halaman </li>
+                            <li>
+                                <a> <i class="ti-calendar"></i> Berlangganan </a>
+                            </li>
+                            <li>
+                                <a href="katalog.php"> <i class="ti-apple"></i> Katalog </a>
+                            </li>
+                            <li>
+                                <a href="chatCustomer.php"> <i class="ti-email"></i> Chat </a>
+                            </li>
+                            <li>
+                                <a>  <i class="ti-files"></i> Payment </a>
+                            </li>
+                            <li>
+                                <a> <i class="ti-user"></i> Profile </a>
+                            </li>
+                            <li>
+                                <a> <i class="ti-map"></i> Delivery </a>
+                            </li>
+                            <li>
+                                <a> <i class="ti-file"></i> History </a>
+                            </li>
+                            <li>
+                                <a href="keranjang.php"> <i class="ti-shopping-cart"></i> Keranjang </a>
+                            </li>
+                            <li>
+                                <a class="sidebar-sub-toggle">
+                                    <i class="ti-layout"></i> Blog <span class="sidebar-collapse-icon ti-angle-down"></span>
+                                </a>
+                                <ul>
+                                    <li>
+                                        <a href="ui-typography.html"> Tips and Tricks </a>
+                                    </li>
+                                    <li>
+                                        <a href="ui-alerts.html"> Resep Masak </a>
+                                    </li>
+
+                                    <li>
+                                        <a href="ui-button.html"> Manfat Sayur dan Buah </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="index.php"> <i class="ti-close"></i> Logout </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- Sidebar End -->
+
+            <div class="header">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="float-left">
+                                <div class="hamburger sidebar-toggle">
+                                    <center>
+                                        <a  > <i class="ti-layout-grid2-alt"></i> Menu Bar </a> <hr>
+                                    </center>
+                                </div>
+                            </div>
+                            <div class="float-right">
+                                <center>
+                                    <h2> <?php echo ucwords($nama); ?> </h2>
+                                    <h3> ID Customer : <?php echo $id; ?> </h3>
+                                </center>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nav Bar Start -->
+            <div class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse" >
+                        <div class="navbar-nav ml-auto">
+                            <a href="keranjang.php" class="nav-item nav-link active" id="navMenu"> Keranjang </a>
+                            <button class="nav-item nav-link btn btn-danger" id="btnLogout" style="color: white;" name="btnLogout"> Logout </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Nav Bar End -->
+        
+            <div class="content-wrap">
+                <!-- Start All Title Box -->
+                <div class="all-title-box">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <h2> Halaman Pembayaran Pengiriman </h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End All Title Box -->
+                
+
+                <div class="container">
+                    <div class="row">
+                        <!-- Alamat Start  -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label> <h4> Masukan Alamat Pengiriman Sesaui di Google Map : </h4> </label>
+                                <input type="text" class="form-control" name="from" id="from" placeholder="Masukan Alamat Pengiriman Anda Sesuai Saran Google Map." value="<?php if(isset($_SESSION["from"])) {echo $_SESSION["from"];} ?>"/>
+                                <input type="hidden" id="origin" require="" name="origin"/>
+                            </div>
+                            <div class="form-group">
+                                <label> <h4> Masukan Detail Alamat Pengiriman : </h4> </label>
+                                <input type="text" name="alamat" id="alamat" class="form-control" placeholder="Masukan Detail Lengkap Alamat Pengiriman Anda." value="<?php if(isset($_POST["alamat"])) {echo $_POST["alamat"];} ?>"/>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <!-- Provinsi Start -->
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label for="form_sex"> <h4> Provinsi </h4> </label>
+                                            <select class="form-control m-b" name="provinsi" id="propinsi">
+                                                <!-- $_SESSION["provinsi"] -->
+                                                <?php
+                                                    if(isset($_SESSION["provinsi"])) {
+                                                        ?>
+                                                            <option name="provinsi" selected value="<?php echo $_SESSION["provinsi"]; ?>"> <?php echo $_SESSION["provinsi"]; ?> </option>
+                                                            <option name="provinsi" value="">-- Pilih Provinsi --</option>
+                                                        <?php
+                                                    } else {
+                                                        ?>
+                                                            <option name="provinsi" selected value="">-- Pilih Provinsi --</option>
+                                                        <?php
+                                                    }
+                                                ?>
+                                            </select>
+                                            <input type="hidden" name="getValProvinsi" id="getValProvinsi" value="<?php if(isset($_SESSION["getValProvinsi"])) { echo $_SESSION["getValProvinsi"]; } ?>">
+                                            <!-- <input type="text" id="hasil"> -->
+                                        </div>
+                                    </div>
+                                    <!-- Provinsi End -->
+                                    <!-- Kota Start -->
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label for="form_post"> <h4> Kab / Kota </h4> </label>
+                                            <select class="form-control m-b" name="kabupaten" id="kabupaten" >
+                                                <?php 
+                                                    if(isset($_SESSION["kabupaten"])) { 
+                                                        ?>
+                                                            <option selected value="<?php echo $_SESSION["kabupaten"]; ?>"> <?php echo $_SESSION["kabupaten"]; ?> </option>
+                                                            <option value="">-- Pilih Kabupaten --</option>
+                                                        <?php
+                                                    } else {
+                                                        ?>
+                                                            <option selected value="">-- Pilih Kabupaten --</option>
+                                                        <?php
+                                                    }
+                                                ?>
+                                            </select>
+                                            <input type="hidden" name="getValKota" id="getValKota" value="<?php if(isset($_SESSION["kabupaten"])) { echo $_SESSION["kabupaten"]; } ?>">
+                                            <input type="hidden" name="getkotaCase" id="kotaCase" value="<?php if(isset($_SESSION["kota"])) { echo $_SESSION["kota"]; } ?>">
+                                        </div>
+                                    </div>
+                                    <!-- Kota End -->
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label> <h4> Pilih Toko : </h4> </label>
+                                <input type="text" disabled class="form-control" name="toko" value="<?php if(isset($_POST["toko"])) { echo $_POST["toko"]; } ?>"  placeholder="Pilih Toko" />
+                                <input type="text" disabled class="form-control" name="to" value="<?php if(isset($_POST["to"])) { echo $_POST["to"]; } ?>" id="to" placeholder="Alamat Toko" />
+                                <input type="hidden" id="destination" require="" name="destination" value="<?php if(isset($_POST["destination"])) { echo $_POST["destination"]; } ?>" type="text" />
+                            </div>
+                            <div class="form-group">
+                                <label> <h2> Jadwal Pemgiriman </h2> </label>
+                                <input type="date" id="jadwal_kirim" name="jadwal_kirim" class="form-control" value="<?php if(isset($_POST["jadwal_kirim"])) { echo $_POST["jadwal_kirim"]; } ?>" placeholder="Jadwal Kirim"/>
+                            </div>
+                            <!-- <div class="form-group">
+                                <div id="result">
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Distance In Mile :
+                                            <span id="in_mile1"></span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Distance is Kilo :
+                                            <span id="in_kilo1"></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div> -->
+                            <div class="form-group">
+                                <label> <h4 id="bayarOngkirMu" style="font-size:25px; font-weight:bolder;">  </h4> </label>
+                                <input type="hidden" id="cariKota" name="cariKota">
+                            </div>
+                            <input type="hidden" id="in_kilo" name="in_kilo">
+                            <input type="hidden" value="<?php echo $ongkir; ?>" id="biayaOngkir" name="biayaOngkir">
+                            <input type="text" id="totalOngkir" name="totalOngkir">
+                            
+                            </form>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <form id="distance_form">
+                                        <button class="btn btn-info active"> Delivery Price Check </button>
+                                    </form>
+                                </div>
+                                <div class="col-sm-4">
+                                    <form method="post">
+                                        <button class="btn btn-success active"> Confirm </button>
+                                    </form>  
+                                </div>
+                                <div class="col-sm-4">
+                                    <form method="post">
+                                        <button class="btn btn-primary active"> Next > </button>
+                                    </form>  
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Alamat End  -->
+
+                        <!-- Alamat Toko Start -->
+                        <div class="col-md-6">
+                            <form method="post">
+                            <?php
+                                $query = "SELECT toko.nama_toko, toko.google_map, toko.kota, toko.provinsi, keranjang.id_cust FROM toko, item, keranjang WHERE keranjang.id_cust='$id' AND toko.id_pemilik=item.pemilik AND item.id_brg=keranjang.id_brg GROUP BY toko.nama_toko, toko.google_map, toko.kota, toko.provinsi, keranjang.id_cust ORDER BY 1 ASC";
+                                $result = mysqli_query(getconn(), $query);	
+                                if ($result->num_rows > 0) {
+                                    while ($row = $result->fetch_assoc()) {
+                                        ?>
+                                            <div class="form-group">
+                                                <h2> <?php echo $row["nama_toko"]; ?> </h2>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <?php echo $row["google_map"]; ?>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <?php echo $row["kota"]; ?>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <?php echo $row["provinsi"]; ?>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <button class="btn btn-primary" name="btnPilih" value="<?= $row["id_cust"] . $row["google_map"];?>">  <i class="ti-location-arrow"></i> </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php
+                                    }
+                                }
+                            ?>
+                            </form>
+                        </div>
+                        <!-- Alamat Toko End -->
+                    </div>
+                </div>
+            </div>
+
+            <a href="#" class="back-to-top"><i class="fa fa-chevron-up"></i></a>
+        
+        <!-- Common -->
+        <script src="assets/js/lib/jquery.min.js"></script>
+        <script src="assets/js/lib/jquery.nanoscroller.min.js"></script>
+        <script src="assets/js/lib/menubar/sidebar.js"></script>
+        <script src="assets/js/lib/preloader/pace.min.js"></script>
+        <script src="assets/js/lib/bootstrap.min.js"></script>
+        <script src="assets/js/scripts.js"></script>
+        <!--  Dashboard 1 -->
+        <script src="assets/js/dashboard1.js"></script>
+        <script src="assets/js/dashboard2.js"></script>
+
+        <!-- JavaScript Libraries -->
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+        <script src="lib/easing/easing.min.js"></script>
+        <script src="lib/owlcarousel/owl.carousel.min.js"></script>
+        <script src="lib/tempusdominus/js/moment.min.js"></script>
+        <script src="lib/tempusdominus/js/moment-timezone.min.js"></script>
+        <script src="lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
+        <!-- Contact Javascript File -->
+        <script src="mail/jqBootstrapValidation.min.js"></script>
+        <script src="mail/contact.js"></script>
+        <!-- Template Javascript -->
+        <script src="js/main.js"></script>
+        <!-- JavaScript Libraries -->
+        <script src="lib/easing/easing.min.js"></script>
+        <script src="lib/owlcarousel/owl.carousel.min.js"></script>
+        <!-- Template Javascript -->
+        <script src="js/main.js"></script>
+
+        <script>
+            var return_first = function() {
+                var tmp = null;
+                $.ajax({
+                    'async': false,
+                    'type': "get",
+                    'global': false,
+                    'dataType': 'json',
+                    'url': 'https://x.rajaapi.com/poe',
+                    'success': function(data) {
+                        tmp = data.token;
+                    }
+                });
+                return tmp;
+            }();
+
+            var fromInput = 'from', toInput = 'to';
+            $(function() {
+                // Autocomplate Input Start
+                var autocompleteFrom;
+                autocompleteFrom = new google.maps.places.Autocomplete((document.getElementById(fromInput)), {
+                    types: ['geocode']
+                });
+
+                var autocompleteTo;
+                autocompleteTo = new google.maps.places.Autocomplete((document.getElementById(toInput)), {
+                    types: ['geocode']
+                });
+                
+                google.maps.event.addListener(autocompleteFrom, 'place_changed', function () {
+                    var from_place = autocompleteFrom.getPlace();
+                    var from_address = from_place.formatted_address;
+                    $("#origin").val(from_address);
+                });
+
+                google.maps.event.addListener(autocompleteTo, 'place_changed', function () {
+                    var to_place = autocompleteTo.getPlace();
+                    var to_address = to_place.formatted_address;
+                    $("#destination").val(to_address);
+                });
+                // Autocomplate Input End
+
+                // Calculate Distance Start
+                function calculateDistance() {
+                    var origin = $('#from').val();
+                    var destination = $('#to').val();
+                    var service = new google.maps.DistanceMatrixService();
+                    service.getDistanceMatrix({
+                        origins: [origin],
+                        destinations: [destination],
+                        travelMode: google.maps.TravelMode.DRIVING,
+                        unitSystem: google.maps.UnitSystem.METRIC,
+                        // unitSystem: google.maps.UnitSystem.IMPERIAL to get Miles
+                        // unitSystem: google.maps.UnitSystem.METRIC to get Kilometers
+                        avoidHighways: false,
+                        avoidTolls: false
+                    }, callback);
+                }
+                // Calculate Distance End
+
+                // get distance results
+                function callback(response, status) {
+                    if (status != google.maps.DistanceMatrixStatus.OK) {
+                        $('#result').html(err);
+                    } else {
+                        var origin = response.originAddresses[0];
+                        var destination = response.destinationAddresses[0];
+                        if (response.rows[0].elements[0].status === "ZERO_RESULTS") {
+                            $('#result').html("Better get on a plane. There are no roads between "  + origin + " and " + destination);
+                            $('#bayarOngkirMu').html("Terlalu Jauh");
+                        } else {
+                            var from_city = $("#from").val().split(', ');
+                            var to_city = $("#to").val().split(', ');
+
+                            $kota = from_city[0].replace(' City', '').toUpperCase();
+                            $ambilKotaKab = document.getElementById('kotaCase').value;
+                            for (let i = 0; i < from_city.length; i++) {
+                                if(from_city[i].replace(' City', '').toUpperCase() == to_city[i].replace(' City', '').toUpperCase() && from_city[i].replace(' City', '').toUpperCase() == $ambilKotaKab.toUpperCase()) {
+                                    $("#cariKota").val(from_city[i].replace(' City', '').toUpperCase());
+                                    $kota = to_city[i].replace(' City', '').toUpperCase();
+                                }
+                            }
+
+                            if($ambilKotaKab == "") {
+                                $('#bayarOngkirMu').html("Silahkan Pilih Kota/Kabupaten Dulu Sesuai Alamat Tujuan Pengiriman");
+                                document.getElementById('bayarOngkirMu').style.color = "Maroon";
+                                $("#cariKota").val("");
+                            } else if($kota != "" && $kota.toUpperCase() != $ambilKotaKab.toUpperCase()) {
+                                $("#cariKota").val("");
+                                $('#bayarOngkirMu').html("Kota Pengiriman Harus Sama Dengan Kota Toko");
+                                document.getElementById('bayarOngkirMu').style.color = "Maroon";
+                            } else if($("#from").val() == "" || $("#origin").val() == "") {
+                                $("#cariKota").val("");
+                                $('#bayarOngkirMu').html("Masukan Tujuan Alamat Pengiriman di Google Map");
+                                document.getElementById('bayarOngkirMu').style.color = "Maroon";
+                            } else if($("#alamat").val() == "") {
+                                $("#cariKota").val("");
+                                $('#bayarOngkirMu').html("Masukan Detail Alamat Pengiriman");
+                                document.getElementById('bayarOngkirMu').style.color = "Maroon";
+                            } else if($("#jadwal_kirim").val() == "") {
+                                $("#cariKota").val("");
+                                $('#bayarOngkirMu').html("Masukan Jadwal Pengiriman");
+                                document.getElementById('bayarOngkirMu').style.color = "Maroon";
+                            } 
+                            else if($("#alamat").val() != "" && $("#from").val() != "" && $("#origin").val() != "" && $("#cariKota").val() != "" && $("#cariKota").val() == $ambilKotaKab.toUpperCase()) {
+                                var distance = response.rows[0].elements[0].distance;
+                                var duration = response.rows[0].elements[0].duration;
+                                console.log(response.rows[0].elements[0].distance);
+                                var distance_in_kilo = distance.value / 1000; // the kilo metet
+                                var distance_in_mile = distance.value / 1609.34; // the mile
+                                var duration_text = duration.text;
+                                var duration_value = duration.value;
+                                // $('#in_mile1').text(distance_in_mile.toFixed(1));
+                                // $('#in_kilo1').text(distance_in_kilo.toFixed(1));
+                                $('#in_kilo').val(distance_in_kilo.toFixed(1));
+
+                                var biaya = $("#biayaOngkir").val() *  $('#in_kilo').val();
+                                $("#totalOngkir").val(biaya.toFixed(0));
+                                $("#bayarOngkirMu").html("Total Ongkir : " + formatRupiah($("#totalOngkir").val(), 'Rp. ') + " / " + $('#in_kilo').val() + " KM");
+                                document.getElementById('bayarOngkirMu').style.color = "navy";
+                                //Dukuh Kupang, Surabaya City, East Java, Indonesia
+                            } else {
+                                $('#bayarOngkirMu').html("Periksa Alamat Pengiriman dan Toko");
+                                document.getElementById('bayarOngkirMu').style.color = "Maroon";
+                            }
+                        }
+                    }
+                }
+
+                // Ongkir Start
+                function formatRupiah(angka, prefix){
+                    var number_string = angka.replace(/[^,\d]/g, '').toString(),
+                    split   		= number_string.split(','),
+                    sisa     		= split[0].length % 3,
+                    rupiah     		= split[0].substr(0, sisa),
+                    ribuan     		= split[0].substr(sisa).match(/\d{3}/gi);
+        
+                    // tambahkan titik jika yang di input sudah menjadi angka ribuan
+                    if(ribuan){
+                        separator = sisa ? '.' : '';
+                        rupiah += separator + ribuan.join('.');
+                    }
+        
+                    rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+                    return prefix == undefined ? rupiah : (rupiah ? 'Rp. ' + rupiah : '');
+                }
+                // Ongkir End
+
+                // Form Calculate Start
+                $('#distance_form').submit(function(e){
+                    e.preventDefault();
+                    calculateDistance();
+                });
+                // Form Calculate End
+
+                // Map Search Start
+                var searchInput = 'googleMap';
+                $(document).ready(function () {
+                    var autocomplete;
+                        autocomplete = new google.maps.places.Autocomplete((document.getElementById(searchInput)), {
+                        types: ['geocode']
+                    });
+                    
+                    google.maps.event.addListener(autocomplete, 'place_changed', function () {
+                        var near_place = autocomplete.getPlace();
+                    });
+                });
+                // Map Search End
+
+                // Start Wilayah
+                $.ajax({
+                    url: 'https://x.rajaapi.com/MeP7c5ne' + window.return_first + '/m/wilayah/provinsi',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(json) {
+                        if (json.code == 200) {
+                            for (i = 0; i < Object.keys(json.data).length; i++) {
+                                $('#propinsi').append($('<option>').text(json.data[i].name).attr('value', json.data[i].id));
+                            }
+                        } else {
+                            $('#kabupaten').append($('<option>').text('Data tidak di temukan').attr('value', 'Data tidak di temukan'));
+                        }
+                    }
+                });
+
+                $("#propinsi").change(function() {
+                    var propinsi = $("#propinsi").val();
+                    $.ajax({
+                        url: 'https://x.rajaapi.com/MeP7c5ne' + window.return_first + '/m/wilayah/kabupaten',
+                        data: "idpropinsi=" + propinsi,
+                        type: 'GET',
+                        cache: false,
+                        dataType: 'json',
+                        success: function(json) {
+                            $("#kabupaten").html('');
+                            if (json.code == 200) {
+                                for (i = 0; i < Object.keys(json.data).length; i++) {
+                                    $('#kabupaten').append($('<option>').text(json.data[i].name).attr('value', json.data[i].id));
+                                }
+                            } else {
+                                $('#kabupaten').append($('<option>').text('Data tidak di temukan').attr('value', 'Data tidak di temukan'));
+                                document.getElementById("getValProvinsi").value = null;
+                                document.getElementById("getValKota").value = null;
+                                document.getElementById('kotaCase').value = null;
+                            }
+                        }
+                    });
+                    // Cari Provinsi dalam String
+                    $.ajax({
+                        url: 'https://x.rajaapi.com/MeP7c5ne' + window.return_first + '/m/wilayah/provinsi',
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(json) {
+                            if (json.code == 200) {
+                                for (i = 0; i < Object.keys(json.data).length; i++) {
+                                    if(propinsi == json.data[i].id) {
+                                        document.getElementById("getValProvinsi").value = json.data[i].name;
+                                    }
+                                }
+                            } else {
+                                document.getElementById("getValProvinsi").value = null;
+                                document.getElementById("getValKota").value = null;
+                                document.getElementById('kotaCase').value = null;
+                            }
+                        }
+                    });
+                });
+
+                $("#kabupaten").change(function() {
+                    var kabupaten = $("#kabupaten").val();
+                    var propinsi = $("#propinsi").val();
+                    // Cari Provinsi dalam String
+                    $.ajax({
+                        url: 'https://x.rajaapi.com/MeP7c5ne' + window.return_first + '/m/wilayah/kabupaten',
+                        data: "idpropinsi=" + propinsi,
+                        type: 'GET',
+                        cache: false,
+                        dataType: 'json',
+                        success: function(json) {
+                            if (json.code == 200) {
+                                for (i = 0; i < Object.keys(json.data).length; i++) {
+                                    if(kabupaten == json.data[i].id) {
+                                        document.getElementById("getValKota").value = json.data[i].name;
+                                        var kota = json.data[i].name;
+                                        const myArr = kota.split(" ", 4);
+                                        var city = "";
+                                        if(myArr[3] == null || myArr[3] == "") {
+                                            if(myArr[2] == null || myArr[2] == "") {
+                                                city = myArr[1];
+                                            } else {
+                                                city = myArr[1] + " " + myArr[2];
+                                            }
+                                        } else {
+                                            city = myArr[1] + " " + myArr[2] + " " + myArr[3];
+                                        }
+                                        document.getElementById('kotaCase').value = city;
+                                    }
+                                }
+                            } else {
+                                document.getElementById("getValKota").value = "";
+                                document.getElementById('kotaCase').value = "";
+                            }
+                        }
+                    });
+                });
+                // End Wilayah
+
+            
+            });
+
+        </script>
+        
+    </body>
+
+</html>
